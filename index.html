@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night ASMR & Midnight Donation</title>
+    <!-- 포트원(구 아임포트) 간편결제 연동 SDK -->
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; max-width: 480px; margin: 0 auto; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h2 { font-size: 18px; margin-top: 0; color: #38bdf8; }
+        button { background: #6366f1; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 15px; margin-top: 10px; font-weight: bold; }
+        button:disabled { background: #475569; cursor: not-allowed; }
+        select, input { width: 100%; padding: 10px; margin-top: 6px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        .status { font-size: 14px; color: #a5f3fc; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>🌙 AI ASMR & 자정 기부</h1>
+
+    <!-- 1. 목소리 녹음 및 ASMR 생성 -->
+    <div class="card">
+        <h2>1. 내 목소리로 ASMR 만들기</h2>
+        <p style="font-size: 13px; color: #94a3b8;">5초 동안 나지막한 목소리로 인사말을 읽어보세요.</p>
+        <button id="recordBtn">🎙️ 목소리 녹음 시작</button>
+        <button id="generateBtn" disabled>✨ AI ASMR 생성하기</button>
+        <div id="recordStatus" class="status"></div>
+        <audio id="audioPlayer" controls style="width:100%; margin-top:15px; display:none;"></audio>
+    </div>
+
+    <!-- 2. 자정 이후 사용 감지 & 기부 설정 -->
+    <div class="card">
+        <h2>2. 자정 사용 제한 & 자동 기부</h2>
+        
+        <label style="font-size: 13px;">기부할 단체 선택</label>
+        <select id="charity">
+            <option value="지파운데이션">지파운데이션 (취약계층 지원)</option>
+            <option value="굿네이버스">굿네이버스 (아동 후원)</option>
+            <option value="유니세프">유니세프 (긴급구호)</option>
+        </select>
+
+        <label style="font-size: 13px; margin-top: 10px; display: block;">벌금 기부 금액 (원)</label>
+        <input type="number" id="amount" value="3000" step="1000">
+
+        <label style="font-size: 13px; margin-top: 10px; display: block;">결제 수단</label>
+        <select id="paymentMethod">
+            <option value="kakaopay">카카오페이</option>
+            <option value="tosspay">토스페이</option>
+            <option value="html5_inicis">삼성페이 / 카드결제</option>
+        </select>
+
+        <button id="checkMidnightBtn" style="background: #ef4444;">📱 자정 사용 감지 테스트</button>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordedBlob = null;
+
+        // 포트원 초기화 (가맹점 식별코드 입력 - 테스트용 기본값 사용)
+        const IMP = window.IMP;
+        IMP.init("imp00000000"); // 포트원 가입 후 발급받은 가맹점 코드 입력
+
+        const recordBtn = document.getElementById('recordBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const recordStatus = document.getElementById('recordStatus');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        // [기능 1] 웹 마이크 녹음
+        recordBtn.onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    recordStatus.innerText = "녹음 완료! 'AI ASMR 생성하기' 버튼을 눌러주세요.";
+                    generateBtn.disabled = false;
+                };
+
+                mediaRecorder.start();
+                recordBtn.disabled = true;
+                recordStatus.innerText = "녹음 중입니다... (5초 후 자동 종료)";
+
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    recordBtn.disabled = false;
+                }, 5000);
+            } catch (err) {
+                alert("마이크 접근 권한이 필요합니다.");
+            }
+        };
+
+        // [기능 2] 서버로 녹음본 전송 후 AI ASMR 재생
+        generateBtn.onclick = async () => {
+            if (!recordedBlob) return;
+            recordStatus.innerText = "AI가 목소리를 학습하고 ASMR을 생성 중입니다... (약 15초 소요)";
+
+            const formData = new FormData();
+            formData.append('audio', recordedBlob, 'voice.webm');
+
+            try {
+                const response = await fetch('/api/generate-asmr', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if(!response.ok) throw new Error("생성 실패");
+
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                audioPlayer.src = audioUrl;
+                audioPlayer.style.display = 'block';
+                audioPlayer.play();
+                recordStatus.innerText = "🎧 내 목소리로 만든 ASMR 재생 중!";
+            } catch (err) {
+                alert("ASMR 생성 실패! ElevenLabs API 키를 등록했는지 확인하세요.");
+                recordStatus.innerText = "";
+            }
+        };
+
+        // [기능 3] 자정 시간 감지 및 카카오/토스 결제 창 실행
+        document.getElementById('checkMidnightBtn').onclick = () => {
+            const now = new Date();
+            const hours = now.getHours();
+
+            // 자정(00시)부터 새벽 6시 사이 감지
+            const isMidnight = (hours >= 0 && hours < 6);
+
+            if (isMidnight || confirm("[테스트] 현재 시각과 상관없이 자정 감지 테스트 결제를 진행하시겠습니까?")) {
+                const charity = document.getElementById('charity').value;
+                const amount = parseInt(document.getElementById('amount').value);
+                const pgProvider = document.getElementById('paymentMethod').value;
+
+                // 결제 요청
+                IMP.request_pay({
+                    pg: pgProvider,
+                    pay_method: 'card',
+                    merchant_uid: 'donation_' + new Date().getTime(),
+                    name: `[자정 사용 벌금] ${charity} 기부`,
+                    amount: amount,
+                }, async function (rsp) {
+                    if (rsp.success) {
+                        await fetch('/api/donate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ amount, charity, paymentMethod: pgProvider })
+                        });
+                        alert(`기부 완료! ${charity}에 ${amount}원이 성공적으로 기부되었습니다.`);
+                    } else {
+                        alert(`결제 취소 또는 실패: ${rsp.error_msg}`);
+                    }
+                });
+            } else {
+                alert("지금은 자정 이후가 아닙니다! 편안한 밤 보내세요.");
+            }
+        };
+    </script>
+</body>
+</html>
