@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>재우미 (Jaeumi) - 밤을 잊은 학생들을 위한 숙면 ASMR & 폰 사용 방지 기부</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            midnight: {
+              900: '#05070f',
+              800: '#0a0e1a',
+              700: '#12182b',
+              600: '#1d2640',
+            },
+            moonlight: '#f4ebd0',
+            starlight: '#e2e8f0',
+            accent: '#7c3aed',
+            gold: '#fbbf24',
+            toss: '#3182f6',
+            kakao: '#fee500'
+          },
+          fontFamily: {
+            sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'glow': 'glow 3s ease-in-out infinite alternate',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            glow: {
+              '0%': { opacity: '0.5', filter: 'drop-shadow(0 0 15px rgba(251, 191, 36, 0.3))' },
+              '100%': { opacity: '1', filter: 'drop-shadow(0 0 30px rgba(251, 191, 36, 0.7))' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Styles for Night Eyes Safety -->
+  <style>
+    body {
+      background-color: #05070f;
+      color: #e2e8f0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+    
+    .glass-panel {
+      background: rgba(18, 24, 43, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    .glass-card {
+      background: rgba(29, 38, 64, 0.5);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+      background: rgba(40, 52, 85, 0.6);
+      border-color: rgba(124, 58, 237, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .glass-card.active {
+      background: rgba(124, 58, 237, 0.25);
+      border-color: #7c3aed;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+    }
+
+    /* Custom Scrollbar for smooth visual */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #05070f;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1d2640;
+      border-radius: 3px;
+    }
+
+    /* Dim screen overlay for bedtime mode */
+    .ultra-dim {
+      filter: brightness(0.4) contrast(0.9);
+    }
+
+    /* Wave visualizer canvas */
+    canvas#starfield {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-purple-900 selection:text-moonlight">
+
+  <!-- Background Canvas Starfield -->
+  <canvas id="starfield"></canvas>
+
+  <!-- Top Navigation Bar -->
+  <header class="relative z-10 w-full border-b border-white/10 glass-panel px-4 lg:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-900 via-purple-700 to-amber-300 p-0.5 flex items-center justify-center shadow-lg shadow-purple-900/40">
+        <div class="w-full h-full bg-midnight-900 rounded-full flex items-center justify-center">
+          <i data-lucide="moon" class="w-5 h-5 text-amber-300"></i>
+        </div>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-purple-200 to-indigo-100">
+          재우미 <span class="text-xs text-purple-400 font-normal ml-1">Jaeumi</span>
+        </h1>
+        <p class="text-[11px] text-slate-400">자정 스마트폰 사용 방지 & 친숙한 목소리 ASMR</p>
+      </div>
+    </div>
+
+    <!-- Clock & Midnight Countdown -->
+    <div class="hidden sm:flex items-center space-x-4">
+      <div class="glass-card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs">
+        <i data-lucide="clock" class="w-4 h-4 text-purple-400"></i>
+        <span class="text-slate-300">현재 시각:</span>
+        <span id="header-time" class="font-mono text-amber-300 font-semibold">00:00:00</span>
+      </div>
+      <div class="glass-card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs border-amber-500/30">
+        <i data-lucide="alert-circle" class="w-4 h-4 text-amber-400"></i>
+        <span class="text-slate-300">자정까지:</span>
+        <span id="midnight-countdown" class="font-mono text-amber-400 font-bold">00h 00m</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="relative z-10 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-center">
+    
+    <!-- Step Wizard Progress Indicator -->
+    <div id="step-indicator" class="mb-8">
+      <div class="flex items-center justify-between relative max-w-lg mx-auto">
+        <!-- Connecting Line -->
+        <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-800 -translate-y-1/2 z-0"></div>
+        <div id="progress-line" class="absolute top-1/2 left-0 h-0.5 bg-purple-600 -translate-y-1/2 z-0 transition-all duration-500 w-0"></div>
+
+        <!-- Step 1 Circle -->
+        <button onclick="goToStep(1)" class="step-btn relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-purple-600 text-white shadow-lg shadow-purple-900/50 transition-all" id="step-btn-1">
+          1
+        </button>
+        <!-- Step 2 Circle -->
+        <button onclick="goToStep(2)" class="step-btn relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-midnight-800 text-slate-400 border border-slate-700 transition-all" id="step-btn-2">
+          2
+        </button>
+        <!-- Step 3 Circle -->
+        <button onclick="goToStep(3)" class="step-btn relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-midnight-800 text-slate-400 border border-slate-700 transition-all" id="step-btn-3">
+          3
+        </button>
+        <!-- Step 4 Circle -->
+        <button onclick="goToStep(4)" class="step-btn relative z-10 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-midnight-800 text-slate-400 border border-slate-700 transition-all" id="step-btn-4">
+          <i data-lucide="moon" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="flex justify-between max-w-lg mx-auto text-xs text-slate-400 mt-2 px-1 text-center">
+        <span class="w-16">목소리/소리</span>
+        <span class="w-16">수면 타이머</span>
+        <span class="w-16">기부 약정</span>
+        <span class="w-16">숙면 모드</span>
+      </div>
+    </div>
+
+    <!-- WIZARD STEP CONTENTS CONTAINER -->
+    <div class="glass-panel rounded-3xl p-6 sm:p-8 min-h-[480px] flex flex-col justify-between relative overflow-hidden">
+
+      <!-- STEP 1: Voice Recording & Sound Mix -->
+      <section id="step-1" class="wizard-step space-y-6">
+        <div>
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-900/40 border border-purple-500/30 text-purple-300 text-xs mb-3">
+            <i data-lucide="mic" class="w-3.5 h-3.5"></i>
+            <span>1단계 : 친숙한 목소리 & AI 수면 믹서</span>
+          </div>
+          <h2 class="text-2xl font-bold text-white mb-2">부모님이나 친구의 목소리를 녹음해 주세요</h2>
+          <p class="text-slate-400 text-sm">마음이 편안해지는 주변 사람의 따뜻한 말 한마디가 최고의 수면제입니다.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Voice Record Box -->
+          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 border border-purple-500/20">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                <i data-lucide="mic" class="w-4 h-4 text-purple-400"></i> 직접 마이크 녹음
+              </span>
+              <span id="record-status" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400">대기 중</span>
+            </div>
+
+            <!-- Wave Visualizer Box -->
+            <div class="h-20 bg-midnight-900/80 rounded-xl flex items-center justify-center p-2 relative overflow-hidden border border-white/5">
+              <div id="mic-waveform" class="flex items-center justify-center space-x-1 h-full w-full">
+                <!-- Dynamic Wave Bars -->
+                <div class="w-1.5 bg-purple-500/40 rounded-full h-3"></div>
+                <div class="w-1.5 bg-purple-500/40 rounded-full h-6"></div>
+                <div class="w-1.5 bg-purple-500/40 rounded-full h-10"></div>
+                <div class="w-1.5 bg-purple-500/40 rounded-full h-4"></div>
+                <div class="w-1.5 bg-purple-500/40 rounded-full h-8"></div>
+                <div class="w-1.5 bg-purple-500/40 rounded-full h-3"></div>
+              </div>
+              <span id="recording-timer" class="absolute bottom-2 right-3 font-mono text-xs text-slate-400">00:00</span>
+            </div>
+
+            <div class="flex space-x-2">
+              <button id="btn-record-start" onclick="toggleRecording()" class="flex-1 py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium text-sm flex items-center justify-center gap-2 transition shadow-md shadow-purple-900/30">
+                <i data-lucide="disc" class="w-4 h-4"></i> 녹음 시작
+              </button>
+              <button id="btn-record-play" onclick="playVoice()" disabled class="py-2.5 px-4 rounded-xl bg-slate-800 text-slate-500 font-medium text-sm flex items-center justify-center gap-2 transition disabled:opacity-50">
+                <i data-lucide="play" class="w-4 h-4"></i> 들어보기
+              </button>
+            </div>
+          </div>
+
+          <!-- File Upload Box -->
+          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                <i data-lucide="file-audio" class="w-4 h-4 text-indigo-400"></i> 음성 파일 업로드
+              </span>
+              <span class="text-xs text-slate-400">MP3, WAV, M4A</span>
+            </div>
+
+            <label class="h-20 border-2 border-dashed border-slate-700 hover:border-purple-500/50 rounded-xl flex flex-col items-center justify-center cursor-pointer transition bg-midnight-900/40 hover:bg-midnight-900/80">
+              <i data-lucide="upload-cloud" class="w-6 h-6 text-slate-400 mb-1"></i>
+              <span id="file-name-display" class="text-xs text-slate-400 text-center px-2">터치하여 친숙한 사람의 음성을 선택하세요</span>
+              <input type="file" id="audio-file-input" accept="audio/*" onchange="handleFileUpload(event)" class="hidden">
+            </label>
+
+            <div class="p-2.5 rounded-xl bg-slate-900/50 border border-white/5 flex items-center justify-between">
+              <span class="text-xs text-slate-400">AI ASMR 필터 효과</span>
+              <div class="flex gap-1.5">
+                <button onclick="setVoiceFilter('soft')" class="filter-btn active text-[11px] px-2.5 py-1 rounded-lg bg-purple-900/60 border border-purple-500 text-purple-200">따뜻함</button>
+                <button onclick="setVoiceFilter('echo')" class="filter-btn text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">몽환적</button>
+                <button onclick="setVoiceFilter('whisper')" class="filter-btn text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">속삭임</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ambient Sound Mixer Synthesizer -->
+        <div class="pt-2">
+          <label class="block text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+            <i data-lucide="cloud-rain" class="w-4 h-4 text-amber-300"></i> 수면 환경음 (배경 소리 믹스)
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button onclick="toggleAmbientSound('rain')" id="amb-rain" class="ambient-card glass-card p-3 rounded-xl flex items-center space-x-3 text-left">
+              <div class="w-8 h-8 rounded-lg bg-blue-900/50 text-blue-300 flex items-center justify-center">
+                <i data-lucide="cloud-rain" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-slate-200">잔잔한 빗소리</div>
+                <div class="text-[10px] text-slate-400">빗방울 신디사이저</div>
+              </div>
+            </button>
+
+            <button onclick="toggleAmbientSound('waves')" id="amb-waves" class="ambient-card glass-card p-3 rounded-xl flex items-center space-x-3 text-left">
+              <div class="w-8 h-8 rounded-lg bg-teal-900/50 text-teal-300 flex items-center justify-center">
+                <i data-lucide="waves" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-slate-200">밤바다 파도</div>
+                <div class="text-[10px] text-slate-400">규칙적인 수평선 소리</div>
+              </div>
+            </button>
+
+            <button onclick="toggleAmbientSound('crickets')" id="amb-crickets" class="ambient-card glass-card p-3 rounded-xl flex items-center space-x-3 text-left">
+              <div class="w-8 h-8 rounded-lg bg-emerald-900/50 text-emerald-300 flex items-center justify-center">
+                <i data-lucide="bug" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-slate-200">시골 풀벌레</div>
+                <div class="text-[10px] text-slate-400">아늑한 야외 귀뚜라미</div>
+              </div>
+            </button>
+
+            <button onclick="toggleAmbientSound('white')" id="amb-white" class="ambient-card glass-card p-3 rounded-xl flex items-center space-x-3 text-left">
+              <div class="w-8 h-8 rounded-lg bg-purple-900/50 text-purple-300 flex items-center justify-center">
+                <i data-lucide="wind" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-slate-200">따뜻한 백색소음</div>
+                <div class="text-[10px] text-slate-400">뇌파 안정 노이즈</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 2: Sleep Timer Setting -->
+      <section id="step-2" class="wizard-step hidden space-y-6">
+        <div>
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 text-xs mb-3">
+            <i data-lucide="timer" class="w-3.5 h-3.5"></i>
+            <span>2단계 : 수면 ASMR 재생 시간 설정</span>
+          </div>
+          <h2 class="text-2xl font-bold text-white mb-2">얼마 동안 목소리를 들으실 건가요?</h2>
+          <p class="text-slate-400 text-sm">정해진 시간이 지나면 오디오가 천천히 페이드아웃되며 자동으로 꺼집니다.</p>
+        </div>
+
+        <div class="space-y-6 py-4">
+          <!-- Quick Preset Buttons -->
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <button onclick="setTimerPreset(15)" class="timer-btn glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-1 text-center active" id="timer-btn-15">
+              <span class="text-2xl font-bold text-amber-300">15</span>
+              <span class="text-xs text-slate-400">분</span>
+            </button>
+            <button onclick="setTimerPreset(30)" class="timer-btn glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-1 text-center" id="timer-btn-30">
+              <span class="text-2xl font-bold text-slate-200">30</span>
+              <span class="text-xs text-slate-400">분 (추천)</span>
+            </button>
+            <button onclick="setTimerPreset(45)" class="timer-btn glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-1 text-center" id="timer-btn-45">
+              <span class="text-2xl font-bold text-slate-200">45</span>
+              <span class="text-xs text-slate-400">분</span>
+            </button>
+            <button onclick="setTimerPreset(60)" class="timer-btn glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-1 text-center" id="timer-btn-60">
+              <span class="text-2xl font-bold text-slate-200">1</span>
+              <span class="text-xs text-slate-400">시간</span>
+            </button>
+            <button onclick="setTimerPreset(120)" class="timer-btn glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-1 text-center col-span-2 sm:col-span-1" id="timer-btn-120">
+              <span class="text-2xl font-bold text-slate-200">2</span>
+              <span class="text-xs text-slate-400">시간</span>
+            </button>
+          </div>
+
+          <!-- Slider Custom Time -->
+          <div class="glass-card p-6 rounded-2xl space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-semibold text-slate-300">사용자 직접 설정</span>
+              <span id="custom-time-display" class="font-mono text-xl font-bold text-amber-300">15 분</span>
+            </div>
+            <input type="range" id="timer-slider" min="5" max="180" step="5" value="15" oninput="updateTimerSlider(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500">
+            <div class="flex justify-between text-[11px] text-slate-500 font-mono">
+              <span>5분</span>
+              <span>60분</span>
+              <span>120분</span>
+              <span>180분</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3: Midnight Penalty & Donation Setup -->
+      <section id="step-3" class="wizard-step hidden space-y-6">
+        <div>
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-900/40 border border-amber-500/30 text-amber-300 text-xs mb-3">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+            <span>3단계 : 자정 폰 사용 방지 기부 약정</span>
+          </div>
+          <h2 class="text-2xl font-bold text-white mb-2">자정이 넘어서 폰을 만지면 자동으로 기부됩니다!</h2>
+          <p class="text-slate-400 text-sm">잠이 안 와서 나도 모르게 스마트폰을 들고 유튜브/인스타를 켜는 습관을 차단하기 위한 강제 페널티 장치입니다.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Donation Target Selection -->
+          <div class="space-y-3">
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">1. 기부 후원 단체 선택</label>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="selectOrg('child')" id="org-child" class="org-card glass-card p-3 rounded-xl text-left border border-amber-500/50 active">
+                <div class="text-amber-400 text-lg mb-1"><i data-lucide="heart-handshake" class="w-5 h-5"></i></div>
+                <div class="text-xs font-bold text-slate-200">어린이재단</div>
+                <div class="text-[10px] text-slate-400">결식아동 및 청소년 지원</div>
+              </button>
+
+              <button onclick="selectOrg('animal')" id="org-animal" class="org-card glass-card p-3 rounded-xl text-left border border-slate-700">
+                <div class="text-rose-400 text-lg mb-1"><i data-lucide="dog" class="w-5 h-5"></i></div>
+                <div class="text-xs font-bold text-slate-200">유기동물 보호소</div>
+                <div class="text-[10px] text-slate-400">구조 동물 치료 및 사료</div>
+              </button>
+
+              <button onclick="selectOrg('eco')" id="org-eco" class="org-card glass-card p-3 rounded-xl text-left border border-slate-700">
+                <div class="text-emerald-400 text-lg mb-1"><i data-lucide="trees" class="w-5 h-5"></i></div>
+                <div class="text-xs font-bold text-slate-200">환경재단</div>
+                <div class="text-[10px] text-slate-400">숲 조성 및 지구 보호</div>
+              </button>
+
+              <button onclick="selectOrg('elder')" id="org-elder" class="org-card glass-card p-3 rounded-xl text-left border border-slate-700">
+                <div class="text-blue-400 text-lg mb-1"><i data-lucide="users" class="w-5 h-5"></i></div>
+                <div class="text-xs font-bold text-slate-200">독거노인 지원</div>
+                <div class="text-[10px] text-slate-400">취약계층 어르신 돌봄</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Payment Method & Penalty Amount -->
+          <div class="space-y-3">
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">2. 간편 결제 및 터치 페널티 금액</label>
+            
+            <div class="glass-card p-4 rounded-xl space-y-3">
+              <!-- Payment Apps -->
+              <div class="flex gap-2">
+                <button onclick="selectPay('toss')" id="pay-toss" class="pay-btn flex-1 py-2 px-3 rounded-xl bg-toss/20 border border-toss text-white text-xs font-bold flex items-center justify-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-toss"></span> 토스페이 Toss
+                </button>
+                <button onclick="selectPay('kakao')" id="pay-kakao" class="pay-btn flex-1 py-2 px-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-kakao"></span> 카카오페이
+                </button>
+              </div>
+
+              <!-- Amount selection -->
+              <div class="space-y-1.5">
+                <span class="text-[11px] text-slate-400">자정(00:00) 이후 폰 조작 1회당 벌금</span>
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button onclick="setPenaltyAmount(1000)" class="amt-btn active text-xs py-1.5 rounded-lg bg-amber-500/20 border border-amber-500 text-amber-300 font-semibold">1,000원</button>
+                  <button onclick="setPenaltyAmount(3000)" class="amt-btn text-xs py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-semibold">3,000원</button>
+                  <button onclick="setPenaltyAmount(5000)" class="amt-btn text-xs py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-semibold">5,000원</button>
+                  <button onclick="setPenaltyAmount(10000)" class="amt-btn text-xs py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-semibold">10,000원</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-start space-x-2.5">
+              <i data-lucide="info" class="w-4 h-4 text-purple-400 shrink-0 mt-0.5"></i>
+              <p class="text-[11px] text-purple-200 leading-relaxed">
+                숙면 모드 진입 후 화면을 다시 켜거나 터치하면 페널티 알림 및 지정 수단 기부 절차가 수행됩니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4: Active Bedtime Night Screen -->
+      <section id="step-4" class="wizard-step hidden space-y-6 text-center my-auto py-4">
+        <div class="space-y-2">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>수면 프로토콜 작동 중</span>
+          </div>
+          <h2 class="text-3xl font-extrabold text-white tracking-tight">이제 눈을 감고 편안히 쉬세요</h2>
+          <p class="text-slate-400 text-sm max-w-md mx-auto">친숙한 목소리와 포근한 환경음이 밤을 지켜줍니다.<br>폰을 만지면 자정 기부 약정이 실행됩니다.</p>
+        </div>
+
+        <!-- Moon Glowing Visualizer -->
+        <div class="relative w-40 h-40 mx-auto my-6 flex items-center justify-center">
+          <div id="moon-glow" class="absolute inset-0 rounded-full bg-amber-300/20 blur-xl animate-pulse-slow"></div>
+          <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-amber-100 via-amber-200 to-indigo-200 shadow-2xl shadow-amber-300/30 flex items-center justify-center relative z-10 border-4 border-amber-100/40">
+            <i data-lucide="moon-star" class="w-16 h-16 text-slate-900 animate-float"></i>
+          </div>
+        </div>
+
+        <!-- Remaining Sleep Timer Display -->
+        <div class="space-y-1">
+          <div class="text-xs text-slate-400 font-medium">ASMR 남은 재생 시간</div>
+          <div id="sleep-timer-display" class="font-mono text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-purple-200 tracking-wider">
+            15:00
+          </div>
+        </div>
+
+        <!-- Bedtime Controls -->
+        <div class="max-w-xs mx-auto glass-card p-3 rounded-2xl flex items-center justify-around text-xs">
+          <button onclick="toggleBedtimePlay()" id="btn-bedtime-toggle" class="p-2.5 rounded-full bg-purple-600 text-white shadow-lg">
+            <i data-lucide="pause" class="w-5 h-5"></i>
+          </button>
+          <div class="flex items-center space-x-2">
+            <i data-lucide="volume-2" class="w-4 h-4 text-slate-400"></i>
+            <input type="range" id="master-volume" min="0" max="1" step="0.05" value="0.8" oninput="setMasterVolume(this.value)" class="w-24 h-1.5 bg-slate-700 rounded-lg appearance-none accent-purple-400">
+          </div>
+        </div>
+      </section>
+
+      <!-- NAVIGATION FOOTER BUTTONS -->
+      <div id="wizard-footer" class="pt-6 border-t border-white/10 flex justify-between items-center mt-4">
+        <button id="btn-prev" onclick="prevStep()" disabled class="px-5 py-2.5 rounded-xl glass-card text-slate-400 hover:text-white text-sm font-medium flex items-center gap-2 transition disabled:opacity-30 disabled:hover:text-slate-400">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i> 이전
+        </button>
+
+        <div class="flex items-center space-x-2">
+          <span id="step-hint" class="text-xs text-slate-400 hidden sm:inline">다음 단계로 이동하여 설정을 완료하세요</span>
+          <button id="btn-next" onclick="nextStep()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-bold flex items-center gap-2 transition shadow-lg shadow-purple-900/40">
+            <span>다음 단계</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: Penalty Triggered Simulated Receipt -->
+  <div id="penalty-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden transition-opacity duration-300">
+    <div class="glass-panel w-full max-w-md rounded-3xl p-6 border-2 border-rose-500/50 shadow-2xl relative animate-bounce-short">
+      
+      <!-- Warning Header -->
+      <div class="text-center space-y-2 mb-5">
+        <div class="w-12 h-12 rounded-full bg-rose-900/60 text-rose-400 border border-rose-500/40 flex items-center justify-center mx-auto animate-pulse">
+          <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white">⚠️ 화면 터치가 감지되었습니다!</h3>
+        <p class="text-xs text-rose-300">자정 이후 스마트폰 조작 금지 약정에 따라 기부금이 전송됩니다.</p>
+      </div>
+
+      <!-- Receipt Box -->
+      <div class="bg-white text-slate-900 rounded-2xl p-5 space-y-4 font-sans text-xs shadow-inner">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+          <div>
+            <span class="font-bold text-sm text-slate-800" id="receipt-pay-app">토스페이 (Toss)</span>
+            <div class="text-[10px] text-slate-500">기부 자동 결제 영수증</div>
+          </div>
+          <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold text-[10px]">결제 완료</span>
+        </div>
+
+        <div class="space-y-2 font-mono">
+          <div class="flex justify-between text-slate-600">
+            <span>후원 대상</span>
+            <span id="receipt-org" class="font-bold text-slate-800">어린이재단</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>위반 사유</span>
+            <span class="text-rose-600 font-semibold">자정 넘어서 폰 터치</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>결제 시간</span>
+            <span id="receipt-time">2026.09.22 00:14:22</span>
+          </div>
+          <div class="border-t border-dashed border-slate-300 pt-2 flex justify-between text-sm font-extrabold text-slate-900">
+            <span>기부 합계</span>
+            <span id="receipt-amount" class="text-purple-700">1,000 원</span>
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-slate-100 text-[10px] text-slate-500 text-center leading-normal">
+          "오늘 밤은 꼭 폰을 내려놓고 꿈나라로 떠나요! 😊"<br>
+          (본 영수증은 수면 습관 형성을 위한 교육용 시뮬레이션입니다)
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <button onclick="closePenaltyModal()" class="w-full mt-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg shadow-rose-900/40 transition">
+        다시 폰 내려놓고 잠들기
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 glass-card px-4 py-3 rounded-2xl border border-purple-500/40 text-xs font-semibold text-white shadow-xl flex items-center space-x-2 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400" id="toast-icon"></i>
+    <span id="toast-msg">메시지가 들어옵니다.</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="relative z-10 w-full text-center py-4 text-[11px] text-slate-500 border-t border-white/5">
+    재우미 (Jaeumi) &copy; 전연령 숙면 유도 & 자정 스마트폰 내려놓기 캠페인
+  </footer>
+
+  <!-- JAVASCRIPT CORE LOGIC -->
+  <script>
+    // --- APP STATE & VARIABLES ---
+    let currentStep = 1;
+    let selectedOrg = 'child';
+    let selectedPay = 'toss';
+    let penaltyAmount = 1000;
+    let timerMinutes = 15;
+    let sleepSecondsLeft = 15 * 60;
+    let timerInterval = null;
+    let isBedtimeActive = false;
+
+    // Web Audio API Context & Nodes
+    let audioCtx = null;
+    let masterGain = null;
+    let recordedAudioBuffer = null;
+    let voiceSourceNode = null;
+    let voiceFilterType = 'soft';
+
+    // Ambient Synthesizers
+    let activeAmbients = {
+      rain: false,
+      waves: false,
+      crickets: false,
+      white: false
+    };
+    let ambientNodes = {};
+
+    // MediaRecorder Variables
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedBlob = null;
+    let isRecording = false;
+    let recordStartTime = 0;
+    let recordTimerInterval = null;
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initStarfieldCanvas();
+      updateClock();
+      setInterval(updateClock, 1000);
+      setupBedtimeTouchDetection();
+    });
+
+    function showToast(msg, iconName = 'check-circle') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = msg;
+      toastIcon.setAttribute('data-lucide', iconName);
+      lucide.createIcons();
+
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 3500);
+    }
+
+    // --- REALTIME CLOCK & MIDNIGHT COUNTDOWN ---
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      document.getElementById('header-time').innerText = timeStr;
+
+      // Calculate time until midnight
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const diffMs = midnight - now;
+
+      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      document.getElementById('midnight-countdown').innerText = `${diffHrs}시간 ${diffMins}분`;
+    }
+
+    // --- WIZARD NAVIGATION ---
+    function goToStep(step) {
+      if (step < 1 || step > 4) return;
+      
+      // Hide current step
+      document.getElementById(`step-${currentStep}`).classList.add('hidden');
+      document.getElementById(`step-btn-${currentStep}`).classList.remove('bg-purple-600', 'text-white');
+      document.getElementById(`step-btn-${currentStep}`).classList.add('bg-midnight-800', 'text-slate-400');
+
+      currentStep = step;
+
+      // Show new step
+      document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+      document.getElementById(`step-btn-${currentStep}`).classList.remove('bg-midnight-800', 'text-slate-400');
+      document.getElementById(`step-btn-${currentStep}`).classList.add('bg-purple-600', 'text-white');
+
+      // Update progress bar width
+      const progressLine = document.getElementById('progress-line');
+      progressLine.style.width = `${((currentStep - 1) / 3) * 100}%`;
+
+      // Update button states
+      document.getElementById('btn-prev').disabled = (currentStep === 1);
+      
+      const nextBtn = document.getElementById('btn-next');
+      if (currentStep === 4) {
+        nextBtn.innerHTML = `<span>수면 시작하기</span> <i data-lucide="moon" class="w-4 h-4"></i>`;
+        nextBtn.onclick = startBedtimeProtocol;
+      } else {
+        nextBtn.innerHTML = `<span>다음 단계</span> <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+        nextBtn.onclick = nextStep;
+      }
+      lucide.createIcons();
+    }
+
+    function nextStep() {
+      if (currentStep < 4) goToStep(currentStep + 1);
+    }
+
+    function prevStep() {
+      if (currentStep > 1) goToStep(currentStep - 1);
+    }
+
+    // --- AUDIO CONTEXT UNLOCK ---
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // --- STEP 1: VOICE RECORDING & FILE UPLOAD ---
+    async function toggleRecording() {
+      initAudioContext();
+      const recordBtn = document.getElementById('btn-record-start');
+      const statusLabel = document.getElementById('record-status');
+
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          recordedChunks = [];
+
+          mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = async () => {
+            recordedBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+            const arrayBuffer = await recordedBlob.arrayBuffer();
+            recordedAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            document.getElementById('btn-record-play').disabled = false;
+            showToast('목소리 녹음이 성공적으로 완료되었습니다!');
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          recordStartTime = Date.now();
+
+          recordBtn.innerHTML = `<i data-lucide="square" class="w-4 h-4"></i> 녹음 중지`;
+          recordBtn.classList.replace('bg-purple-600', 'bg-rose-600');
+          statusLabel.innerText = '녹음 중...';
+          statusLabel.classList.replace('bg-slate-800', 'bg-rose-900/60');
+          statusLabel.classList.replace('text-slate-400', 'text-rose-200');
+
+          recordTimerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - recordStartTime) / 1000);
+            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            document.getElementById('recording-timer').innerText = `${m}:${s}`;
+          }, 1000);
+
+        } catch (err) {
+          showToast('마이크 접근 권한이 필요합니다.', 'alert-circle');
+        }
+      } else {
+        // Stop recording
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        isRecording = false;
+        clearInterval(recordTimerInterval);
+
+        recordBtn.innerHTML = `<i data-lucide="disc" class="w-4 h-4"></i> 녹음 다시하기`;
+        recordBtn.classList.replace('bg-rose-600', 'bg-purple-600');
+        statusLabel.innerText = '녹음 완료';
+        statusLabel.classList.replace('bg-rose-900/60', 'bg-emerald-900/60');
+        statusLabel.classList.replace('text-rose-200', 'text-emerald-200');
+      }
+      lucide.createIcons();
+    }
+
+    function handleFileUpload(event) {
+      initAudioContext();
+      const file = event.target.files[0];
+      if (!file) return;
+
+      document.getElementById('file-name-display').innerText = `선택됨: ${file.name}`;
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target.result;
+          recordedAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          document.getElementById('btn-record-play').disabled = false;
+          showToast('오디오 파일이 로드되었습니다.');
+        } catch (err) {
+          showToast('지원되지 않는 오디오 파일 형식입니다.', 'alert-circle');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function setVoiceFilter(type) {
+      voiceFilterType = type;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-purple-900/60', 'border-purple-500', 'text-purple-200');
+        btn.classList.add('bg-slate-800', 'border-slate-700', 'text-slate-400');
+      });
+      event.target.classList.add('bg-purple-900/60', 'border-purple-500', 'text-purple-200');
+      showToast(`ASMR 오디오 필터: ${type} 적용됨`);
+    }
+
+    function playVoice() {
+      if (!recordedAudioBuffer) return;
+      initAudioContext();
+
+      if (voiceSourceNode) voiceSourceNode.stop();
+
+      voiceSourceNode = audioCtx.createBufferSource();
+      voiceSourceNode.buffer = recordedAudioBuffer;
+
+      // Apply Voice Filters via BiquadFilterNode
+      const filter = audioCtx.createBiquadFilter();
+
+      if (voiceFilterType === 'soft') {
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+      } else if (voiceFilterType === 'whisper') {
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      } else {
+        filter.type = 'allpass';
+      }
+
+      voiceSourceNode.connect(filter);
+      filter.connect(masterGain);
+      voiceSourceNode.start();
+      showToast('녹음된 목소리를 재생합니다.');
+    }
+
+    // --- AMBIENT SOUND SYNTHESIZER (Web Audio API Pure Code) ---
+    function toggleAmbientSound(type) {
+      initAudioContext();
+      activeAmbients[type] = !activeAmbients[type];
+      const btn = document.getElementById(`amb-${type}`);
+
+      if (activeAmbients[type]) {
+        btn.classList.add('active');
+        startAmbientSynth(type);
+      } else {
+        btn.classList.remove('active');
+        stopAmbientSynth(type);
+      }
+    }
+
+    function startAmbientSynth(type) {
+      if (!audioCtx) return;
+
+      if (type === 'rain' || type === 'white') {
+        // Noise Generator for Rain / White Noise
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(type === 'rain' ? 800 : 3000, audioCtx.currentTime);
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(type === 'rain' ? 0.2 : 0.1, audioCtx.currentTime);
+
+        whiteNoise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(masterGain);
+        whiteNoise.start();
+
+        ambientNodes[type] = { source: whiteNoise, gain: gainNode };
+      } else if (type === 'waves' || type === 'crickets') {
+        // LFO modulated sine oscillator for waves / chirps
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        if (type === 'waves') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+
+          // Wave volume modulation
+          const lfo = audioCtx.createOscillator();
+          lfo.frequency.setValueAtTime(0.2, audioCtx.currentTime); // 5 sec wave cycle
+          const lfoGain = audioCtx.createGain();
+          lfoGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+          lfo.connect(lfoGain);
+          lfoGain.connect(gainNode.gain);
+          lfo.start();
+
+          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        } else {
+          // Crickets chirp pulse
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(4500, audioCtx.currentTime);
+          gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        }
+
+        osc.connect(gainNode);
+        gainNode.connect(masterGain);
+        osc.start();
+
+        ambientNodes[type] = { source: osc, gain: gainNode };
+      }
+    }
+
+    function stopAmbientSynth(type) {
+      if (ambientNodes[type]) {
+        try {
+          ambientNodes[type].source.stop();
+        } catch (e) {}
+        delete ambientNodes[type];
+      }
+    }
+
+    // --- STEP 2: TIMER LOGIC ---
+    function setTimerPreset(mins) {
+      timerMinutes = mins;
+      document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`timer-btn-${mins}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      
+      document.getElementById('timer-slider').value = mins;
+      document.getElementById('custom-time-display').innerText = `${mins} 분`;
+    }
+
+    function updateTimerSlider(val) {
+      timerMinutes = parseInt(val);
+      document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('custom-time-display').innerText = `${val} 분`;
+    }
+
+    // --- STEP 3: DONATION & PENALTY OPTIONS ---
+    function selectOrg(org) {
+      selectedOrg = org;
+      document.querySelectorAll('.org-card').forEach(card => {
+        card.classList.remove('active', 'border-amber-500/50');
+        card.classList.add('border-slate-700');
+      });
+      const activeCard = document.getElementById(`org-${org}`);
+      activeCard.classList.add('active', 'border-amber-500/50');
+    }
+
+    function selectPay(pay) {
+      selectedPay = pay;
+      document.querySelectorAll('.pay-btn').forEach(btn => {
+        btn.classList.remove('bg-toss/20', 'border-toss', 'bg-kakao/20', 'border-kakao');
+        btn.classList.add('bg-slate-800', 'border-slate-700');
+      });
+      const activeBtn = document.getElementById(`pay-${pay}`);
+      if (pay === 'toss') {
+        activeBtn.classList.add('bg-toss/20', 'border-toss');
+      } else {
+        activeBtn.classList.add('bg-kakao/20', 'border-kakao');
+      }
+    }
+
+    function setPenaltyAmount(amt) {
+      penaltyAmount = amt;
+      document.querySelectorAll('.amt-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-amber-500/20', 'border-amber-500', 'text-amber-300');
+        btn.classList.add('bg-slate-800', 'border-slate-700', 'text-slate-300');
+      });
+      event.target.classList.add('active', 'bg-amber-500/20', 'border-amber-500', 'text-amber-300');
+    }
+
+    // --- STEP 4: BEDTIME EXECUTION MODE ---
+    function startBedtimeProtocol() {
+      initAudioContext();
+      isBedtimeActive = true;
+      sleepSecondsLeft = timerMinutes * 60;
+      updateSleepCountdownDisplay();
+
+      // Start Countdown
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (sleepSecondsLeft > 0) {
+          sleepSecondsLeft--;
+          updateSleepCountdownDisplay();
+        } else {
+          // Timer finished
+          stopBedtimeProtocol();
+          showToast('ASMR 재생 시간이 완료되었습니다. 좋은 꿈 꾸세요 🌙');
+        }
+      }, 1000);
+
+      // Play continuous voice if available
+      if (recordedAudioBuffer) {
+        playVoiceLoop();
+      }
+
+      showToast('숙면 모드가 개시되었습니다. 스마트폰을 놓아주세요.');
+    }
+
+    function playVoiceLoop() {
+      if (!recordedAudioBuffer || !isBedtimeActive) return;
+      voiceSourceNode = audioCtx.createBufferSource();
+      voiceSourceNode.buffer = recordedAudioBuffer;
+      voiceSourceNode.connect(masterGain);
+      voiceSourceNode.onended = () => {
+        if (isBedtimeActive) setTimeout(playVoiceLoop, 3000); // repeat with 3s sleep pause
+      };
+      voiceSourceNode.start();
+    }
+
+    function stopBedtimeProtocol() {
+      isBedtimeActive = false;
+      clearInterval(timerInterval);
+      if (voiceSourceNode) {
+        try { voiceSourceNode.stop(); } catch(e){}
+      }
+    }
+
+    function updateSleepCountdownDisplay() {
+      const m = String(Math.floor(sleepSecondsLeft / 60)).padStart(2, '0');
+      const s = String(sleepSecondsLeft % 60).padStart(2, '0');
+      document.getElementById('sleep-timer-display').innerText = `${m}:${s}`;
+    }
+
+    function toggleBedtimePlay() {
+      const btn = document.getElementById('btn-bedtime-toggle');
+      if (isBedtimeActive) {
+        stopBedtimeProtocol();
+        btn.innerHTML = `<i data-lucide="play" class="w-5 h-5"></i>`;
+      } else {
+        startBedtimeProtocol();
+        btn.innerHTML = `<i data-lucide="pause" class="w-5 h-5"></i>`;
+      }
+      lucide.createIcons();
+    }
+
+    function setMasterVolume(val) {
+      if (masterGain && audioCtx) {
+        masterGain.gain.setValueAtTime(parseFloat(val), audioCtx.currentTime);
+      }
+    }
+
+    // --- MIDNIGHT TOUCH PENALTY DETECTION ---
+    function setupBedtimeTouchDetection() {
+      const step4Container = document.getElementById('step-4');
+
+      const triggerPenalty = (e) => {
+        // Only trigger when step 4 is active
+        if (currentStep === 4 && isBedtimeActive) {
+          // Prevent standard touch action
+          e.stopPropagation();
+
+          // Prepare simulated receipt modal details
+          const orgNames = {
+            child: '어린이재단 (결식아동 후원)',
+            animal: '유기동물 보호소',
+            eco: '환경재단 (지구 살리기)',
+            elder: '독거노인 지원센터'
+          };
+
+          document.getElementById('receipt-pay-app').innerText = selectedPay === 'toss' ? '토스페이 (Toss Pay)' : '카카오페이 (Kakao Pay)';
+          document.getElementById('receipt-org').innerText = orgNames[selectedOrg] || '어린이재단';
+          document.getElementById('receipt-amount').innerText = `${penaltyAmount.toLocaleString()} 원`;
+
+          const now = new Date();
+          document.getElementById('receipt-time').innerText = now.toLocaleString('ko-KR');
+
+          // Show Modal
+          document.getElementById('penalty-modal').classList.remove('hidden');
+        }
+      };
+
+      step4Container.addEventListener('touchstart', triggerPenalty, { passive: true });
+      step4Container.addEventListener('mousedown', triggerPenalty);
+    }
+
+    function closePenaltyModal() {
+      document.getElementById('penalty-modal').classList.add('hidden');
+      showToast('휴대폰을 침대 멀리 놓으시는 것을 추천합니다 🛌');
+    }
+
+    // --- CANVAS STARFIELD BACKGROUND ANIMATION ---
+    function initStarfieldCanvas() {
+      const canvas = document.getElementById('starfield');
+      const ctx = canvas.getContext('2d');
+
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      const stars = Array.from({ length: 120 }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 1.8 + 0.2,
+        alpha: Math.random(),
+        speed: Math.random() * 0.01 + 0.003
+      }));
+
+      function render() {
+        ctx.clearRect(0, 0, width, height);
+
+        stars.forEach(star => {
+          star.alpha += star.speed;
+          if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
+
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(star.alpha)})`;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        requestAnimationFrame(render);
+      }
+
+      render();
+    }
+  </script>
+</body>
+</html>
